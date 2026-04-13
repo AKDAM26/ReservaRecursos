@@ -1,11 +1,6 @@
 .vs/
-
-.cursor/
-.cursorrules
-.agents/
 .vscode/
 
-SCRIPT.txt
 *.md
 !README.md
 !CHANGELOG.md
