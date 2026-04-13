@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ReservaRecursos/reservarecursos.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+</Solution>

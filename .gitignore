@@ -1,0 +1,18 @@
+# Visual Studio
+.vs/
+
+# Herramientas de IA y Editores
+.cursor/
+.cursorrules
+.agents/
+.vscode/
+
+# Archivos de prompts o contexto
+SCRIPT.txt
+*.md
+!README.md
+!CHANGELOG.md
+
+# Ignorar la carpeta de build temporal si generas compilados en .NET
+obj/
+bin/
