@@ -1,168 +1,289 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
-import { getMonthGrid, isSameDay, monthLabel, startOfDay } from '../../lib/date.js'
-import { reservationsService } from '../../lib/services/reservations.service.js'
-import { ReservationModal } from '../reservations/ReservationModal.jsx'
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { getMonthGrid, isSameDay, monthLabel, startOfDay, isoDate } from '../../lib/date.js';
+import { reservationsService } from '../../lib/services/reservations.service.js';
+import { resourcesService } from '../../lib/services/resources.service.js';
+import { typesService } from '../../lib/services/types.service.js';
+import { CalendarFilters } from './CalendarFilters.jsx';
+import { BasicCalendarView } from './BasicCalendarView.jsx';
+import { DetailedCalendarView } from './DetailedCalendarView.jsx';
+import { ReservationModal } from '../reservations/ReservationModal.jsx';
+import { ReservationDetailsModal } from '../reservations/ReservationDetailsModal.jsx';
+import { IncidentModal } from '../reservations/IncidentModal.jsx';
+import { useAuth } from '../../app/auth/useAuth.js';
 
-const WEEKDAYS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
+const WEEKDAYS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
 export function CalendarPage() {
-  const today = useMemo(() => startOfDay(new Date()), [])
-  const [cursorMonth, setCursorMonth] = useState(
-    () => new Date(today.getFullYear(), today.getMonth(), 1),
-  )
-  const [selectedDay, setSelectedDay] = useState(today)
-  const grid = useMemo(() => getMonthGrid(cursorMonth), [cursorMonth])
+  const { user } = useAuth();
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const [cursorMonth, setCursorMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDay, setSelectedDay] = useState(today); // For Detailed View
+  const [cursorWeek, setCursorWeek] = useState(() => {
+    // Determine the Monday of the current week
+    const current = new Date(today);
+    const day = current.getDay();
+    const diff = current.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(current.setDate(diff));
+  });
 
-  const [monthReservations, setMonthReservations] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const grid = useMemo(() => getMonthGrid(cursorMonth), [cursorMonth]);
 
-  const fetchReservations = useCallback(async () => {
-    setLoading(true)
-    const startAfter = new Date(cursorMonth.getFullYear(), cursorMonth.getMonth(), 1).toISOString()
-    const endBefore = new Date(cursorMonth.getFullYear(), cursorMonth.getMonth() + 1, 0, 23, 59, 59).toISOString()
-    try {
-      const data = await reservationsService.getReservations({ startAfter, endBefore, status: 'active' })
-      setMonthReservations(data)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
+  const [viewMode, setViewMode] = useState('detailed');
+  const [resourceTypes, setResourceTypes] = useState([]);
+  const [selectedResourceType, setSelectedResourceType] = useState('all');
+  
+  const [resources, setResources] = useState([]);
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Modals state
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+  
+  const [selectedCellData, setSelectedCellData] = useState({ resourceId: '', date: '', period: null });
+  const [selectedReservation, setSelectedReservation] = useState(null);
+
+  // Week days calculation for Basic View
+  const weekDays = useMemo(() => {
+    const days = [];
+    for (let i = 0; i < 5; i++) { // Monday to Friday
+      const d = new Date(cursorWeek);
+      d.setDate(cursorWeek.getDate() + i);
+      days.push(d);
     }
-  }, [cursorMonth])
+    return days;
+  }, [cursorWeek]);
+
+  // Load Resource Types and Resources initially
+  useEffect(() => {
+    const fetchBaseData = async () => {
+      try {
+        const [typesData, resData] = await Promise.all([
+          typesService.getTypes(),
+          resourcesService.getResources()
+        ]);
+        setResourceTypes(typesData);
+        setResources(resData);
+      } catch (err) {
+        console.error('Error fetching base data:', err);
+      }
+    };
+    fetchBaseData();
+  }, []);
+
+  // Fetch Reservations based on View Mode
+  const fetchReservations = useCallback(async () => {
+    setLoading(true);
+    try {
+      let startDateStr, endDateStr;
+      
+      if (viewMode === 'detailed') {
+        // Fetch only for selectedDay using local timezone to avoid shifts
+        startDateStr = isoDate(selectedDay);
+        endDateStr = startDateStr;
+      } else {
+        // Fetch for the week (Monday to Friday)
+        startDateStr = isoDate(weekDays[0]);
+        endDateStr = isoDate(weekDays[4]);
+      }
+
+      const data = await reservationsService.getReservations({ 
+        startDate: startDateStr, 
+        endDate: endDateStr,
+        status: 'active' 
+      });
+      setReservations(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [viewMode, selectedDay, weekDays]);
 
   useEffect(() => {
-    fetchReservations()
-  }, [fetchReservations])
+    fetchReservations();
+  }, [fetchReservations]);
 
-  const dayReservations = useMemo(() => {
-    return monthReservations.filter(res => {
-      const resDate = startOfDay(new Date(res.start_at))
-      return isSameDay(resDate, selectedDay)
-    })
-  }, [monthReservations, selectedDay])
+  // Filter resources based on selected type
+  const filteredResources = useMemo(() => {
+    if (selectedResourceType === 'all') return resources;
+    return resources.filter(r => r.type_id === selectedResourceType);
+  }, [resources, selectedResourceType]);
 
-  const handleReservationSuccess = () => {
-    setIsModalOpen(false)
-    fetchReservations()
-  }
+  // Handlers for Week Navigation
+  const handlePrevWeek = () => {
+    const prev = new Date(cursorWeek);
+    prev.setDate(prev.getDate() - 7);
+    setCursorWeek(prev);
+  };
 
-  // Format the selected day for the modal (YYYY-MM-DD)
-  const selectedDayIso = selectedDay.toISOString().split('T')[0]
+  const handleNextWeek = () => {
+    const next = new Date(cursorWeek);
+    next.setDate(next.getDate() + 7);
+    setCursorWeek(next);
+  };
+
+  const handleCellClick = (resourceId, date, period = null) => {
+    setSelectedCellData({
+      resourceId,
+      date: isoDate(date),
+      period
+    });
+    setIsReservationModalOpen(true);
+  };
+
+  const [selectedIncident, setSelectedIncident] = useState(null);
+
+  const handleReservationClick = (reservation) => {
+    setSelectedReservation(reservation);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleReportIncident = (reservation, incident = null) => {
+    setSelectedReservation(reservation);
+    setSelectedIncident(incident);
+    setIsDetailsModalOpen(false);
+    setIsIncidentModalOpen(true);
+  };
+
+  const weekLabel = `Semana del ${weekDays[0].getDate()} al ${weekDays[4].getDate()} de ${new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(weekDays[4])}`;
 
   return (
-    <section className="pageWrap">
+    <section className="pageWrap calendar-page-modern">
       <div className="titleBar titleBar--row">
         <div>
           <h1>Calendario de Reservas</h1>
-          <p>Visualiza todas las ocupaciones de recursos</p>
+          <p>Visualiza la disponibilidad de recursos por periodos</p>
         </div>
-        <button className="btn btn--primary" onClick={() => setIsModalOpen(true)}>
-          Nueva Reserva
-        </button>
       </div>
 
-      <div className="calendarLayout">
-        <section className="calendarBox">
-          <div className="calendarBox__head">
-            <button
-              type="button"
-              onClick={() =>
-                setCursorMonth(new Date(cursorMonth.getFullYear(), cursorMonth.getMonth() - 1, 1))
-              }
-            >
-              ‹
-            </button>
-            <strong>{monthLabel(cursorMonth)}</strong>
-            <button
-              type="button"
-              onClick={() =>
-                setCursorMonth(new Date(cursorMonth.getFullYear(), cursorMonth.getMonth() + 1, 1))
-              }
-            >
-              ›
-            </button>
-          </div>
+      <CalendarFilters 
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        resourceTypes={resourceTypes}
+        selectedResourceType={selectedResourceType}
+        setSelectedResourceType={setSelectedResourceType}
+        onPrev={handlePrevWeek}
+        onNext={handleNextWeek}
+        dateLabel={weekLabel}
+      />
 
-          <div className="calendarBox__weekdays">
-            {WEEKDAYS.map((day) => (
-              <span key={day}>{day}</span>
-            ))}
-          </div>
+      <div className={`calendarLayout ${viewMode === 'basic' ? 'layout-basic' : 'layout-detailed'}`}>
+        
+        {/* HYBRID DESIGN: Only show Month Picker in Detailed View */}
+        {viewMode === 'detailed' && (
+          <section className="calendarBox calendarBox-modern">
+            <div className="calendarBox__head">
+              <button
+                type="button"
+                onClick={() => setCursorMonth(new Date(cursorMonth.getFullYear(), cursorMonth.getMonth() - 1, 1))}
+              >
+                ‹
+              </button>
+              <strong>{monthLabel(cursorMonth)}</strong>
+              <button
+                type="button"
+                onClick={() => setCursorMonth(new Date(cursorMonth.getFullYear(), cursorMonth.getMonth() + 1, 1))}
+              >
+                ›
+              </button>
+            </div>
 
-          <div className="calendarBox__grid">
-            {grid.map(({ date, inMonth }) => {
-              const classes = ['calendarDay']
-              if (!inMonth) classes.push('is-out')
-              if (isSameDay(date, today)) classes.push('is-today')
-              if (isSameDay(date, selectedDay)) classes.push('is-active')
-              
-              // Indicate if date has reservations
-              const hasRes = monthReservations.some(r => isSameDay(startOfDay(new Date(r.start_at)), date))
-
-              return (
-                <button
-                  key={date.toISOString()}
-                  className={classes.join(' ')}
-                  type="button"
-                  onClick={() => setSelectedDay(date)}
-                >
-                  {date.getDate()}
-                  {hasRes && <span style={{display:'block', width: '4px', height: '4px', background: 'blue', borderRadius: '50%', margin: '2px auto 0'}} />}
-                </button>
-              )
-            })}
-          </div>
-          {loading && <p className="calendarHint">Cargando datos de mes...</p>}
-        </section>
-
-        <section>
-          <div className="titleBar titleBar--row" style={{ marginBottom: '10px' }}>
-            <h3 className="dayList__title" style={{ margin: 0 }}>
-              Reservas para este día
-              <span className="dayList__date">
-                {new Intl.DateTimeFormat('es-ES', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                }).format(selectedDay)}
-              </span>
-            </h3>
-          </div>
-          
-          {dayReservations.length === 0 ? (
-            <article className="dayEmpty" role="status">
-              No hay reservas programadas para esta fecha.
-            </article>
-          ) : (
-            <div style={{ display: 'grid', gap: '1rem', marginTop: '1px' }}>
-              {dayReservations.map(res => (
-                <div key={res.id} className="reservationCard" style={{ gridTemplateColumns: '1fr' }}>
-                  <div className="reservationCard__body">
-                    <div className="reservationCard__header">
-                      <h3>{res.resources?.name || `Recurso ID: ${res.resource_id}`}</h3>
-                      <span>{new Date(res.start_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {new Date(res.end_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    </div>
-                    <div className="reservationCard__reason">
-                      <strong>Motivo:</strong> {res.notes}
-                    </div>
-                    <small>Reservado por: {res.profiles?.display_name || res.profiles?.email}</small>
-                  </div>
-                </div>
+            <div className="calendarBox__weekdays">
+              {WEEKDAYS.map((day) => (
+                <span key={day}>{day}</span>
               ))}
             </div>
+
+            <div className="calendarBox__grid">
+              {grid.map(({ date, inMonth }) => {
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                const classes = ['calendarDay'];
+                if (!inMonth) classes.push('is-out');
+                if (isWeekend) classes.push('is-disabled'); // Optional styling for CSS if needed
+                if (isSameDay(date, today)) classes.push('is-today');
+                if (isSameDay(date, selectedDay)) classes.push('is-active');
+                
+                return (
+                  <button
+                    key={date.toISOString()}
+                    className={classes.join(' ')}
+                    type="button"
+                    disabled={isWeekend}
+                    title={isWeekend ? 'No se admiten reservas en fin de semana' : ''}
+                    onClick={() => setSelectedDay(date)}
+                  >
+                    {date.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <section className="matrix-section-wrapper">
+          {loading && <div className="loading-overlay">Cargando datos...</div>}
+          
+          {viewMode === 'detailed' && (
+            <>
+              <h3 className="matrix-title">
+                Horario para el día: {new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(selectedDay)}
+              </h3>
+              <DetailedCalendarView 
+                resources={filteredResources} 
+                reservations={reservations} 
+                currentUserId={user?.id}
+                onCellClick={(resourceId, period) => handleCellClick(resourceId, selectedDay, period)}
+                onReservationClick={handleReservationClick}
+              />
+            </>
+          )}
+
+          {viewMode === 'basic' && (
+            <BasicCalendarView 
+              resources={filteredResources}
+              reservations={reservations}
+              weekDays={weekDays}
+              onCellClick={(resourceId, date) => handleCellClick(resourceId, date)}
+            />
           )}
         </section>
       </div>
 
-      {isModalOpen && (
-        <ReservationModal 
-          initialDate={selectedDayIso}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={handleReservationSuccess}
+      {isReservationModalOpen && (
+        <ReservationModal
+          onClose={() => setIsReservationModalOpen(false)}
+          onSuccess={() => {
+            fetchReservations();
+          }}
+          initialResourceId={selectedCellData.resourceId}
+          initialDate={selectedCellData.date}
+          initialPeriod={selectedCellData.period}
+        />
+      )}
+
+      {isDetailsModalOpen && (
+        <ReservationDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          reservation={selectedReservation}
+          onReportIncident={handleReportIncident}
+          onSuccess={fetchReservations}
+        />
+      )}
+
+      {isIncidentModalOpen && (
+        <IncidentModal
+          isOpen={isIncidentModalOpen}
+          onClose={() => setIsIncidentModalOpen(false)}
+          reservation={selectedReservation}
+          incident={selectedIncident}
+          onSuccess={() => {
+            console.log("Incidencia actualizada correctamente");
+          }}
         />
       )}
     </section>
-  )
+  );
 }

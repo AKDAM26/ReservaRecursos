@@ -25,6 +25,12 @@ export function isoDate(d) {
   return `${y}-${m}-${day}`
 }
 
+export function parseLocal(dateString) {
+  if (!dateString) return new Date()
+  const [y, m, d] = dateString.split('-')
+  return new Date(Number(y), Number(m) - 1, Number(d))
+}
+
 export function monthLabel(d, locale = 'es-ES') {
   return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
     d,

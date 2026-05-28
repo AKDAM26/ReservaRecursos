@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
       email: session.user.email,
       role: profile.role,
       displayName: profile.display_name,
+      departmentId: profile.department_id,
     } : null
 
     return {
@@ -97,6 +98,11 @@ export function AuthProvider({ children }) {
       logout: async () => {
         await supabase.auth.signOut()
       },
+      refreshProfile: async () => {
+        if (session?.user?.id) {
+          await fetchProfile(session.user.id)
+        }
+      }
     }
   }, [session, profile, loading])
 

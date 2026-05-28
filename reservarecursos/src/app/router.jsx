@@ -9,6 +9,7 @@ import { HomePage } from '../pages/home/HomePage.jsx'
 import { MyReservationsPage } from '../pages/reservations/MyReservationsPage.jsx'
 import { ResourcesPage } from '../pages/resources/ResourcesPage.jsx'
 import { TypesPage } from '../pages/types/TypesPage.jsx'
+import { IncidentsDashboard } from '../pages/incidents/IncidentsDashboard.jsx'
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +49,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireRole allow={['admin']}>
             <TypesPage />
+          </RequireRole>
+        ),
+      },
+      {
+        path: 'incidencias',
+        element: (
+          <RequireRole allow={['admin']}>
+            <IncidentsDashboard />
           </RequireRole>
         ),
       },

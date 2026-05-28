@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../app/auth/useAuth'
 import { reservationsService } from '../../lib/services/reservations.service'
+import { ReservationDetailsModal } from './ReservationDetailsModal'
+import { IncidentModal } from './IncidentModal'
 
 export function MyReservationsPage() {
   const { user } = useAuth()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
+  
+  const [selectedReservation, setSelectedReservation] = useState(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false)
+  const [selectedIncident, setSelectedIncident] = useState(null)
 
   const fetchReservations = async () => {
     setLoading(true)
@@ -23,14 +30,16 @@ export function MyReservationsPage() {
     if (user?.id) fetchReservations()
   }, [user?.id])
 
-  const handleCancel = async (id) => {
-    if (!confirm('¿Seguro que deseas cancelar esta reserva?')) return
-    try {
-      await reservationsService.cancelReservation(id, user.id)
-      fetchReservations()
-    } catch (err) {
-      alert('Error cambiando estado: ' + err.message)
-    }
+  const handleCardClick = (res) => {
+    setSelectedReservation(res)
+    setIsDetailsModalOpen(true)
+  }
+
+  const handleReportIncident = (res, incident = null) => {
+    setSelectedReservation(res)
+    setSelectedIncident(incident)
+    setIsDetailsModalOpen(false)
+    setIsIncidentModalOpen(true)
   }
 
   return (
@@ -52,23 +61,79 @@ export function MyReservationsPage() {
           </p>
         </article>
       ) : (
-        <div style={{ display: 'grid', gap: '1rem' }}>
+        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
           {reservations.map(res => {
             const isActive = res.status === 'active'
-            const start = new Date(res.start_at)
-            const end = new Date(res.end_at)
+            const resDate = new Date(res.reservation_date)
+            const isPast = resDate < new Date(new Date().setHours(0,0,0,0))
+            const statusLabel = !isActive ? 'Cancelada' : isPast ? 'Pasada' : 'Activa'
+            const opacityVal = isActive && !isPast ? 1 : 0.6
+            
+            const creationDate = new Date(res.created_at).toLocaleDateString('es-ES')
+            const formattedResDate = resDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
             return (
-              <div key={res.id} style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '4px', opacity: isActive ? 1 : 0.6 }}>
-                <h3>{start.toLocaleDateString()} de {start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} a {end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</h3>
-                <p>Motivo: {res.notes}</p>
-                <p>Estado: {res.status}</p>
-                {isActive && (
-                  <button className="btn btn--danger" style={{marginTop: '0.5rem'}} onClick={() => handleCancel(res.id)}>Cancelar Reserva</button>
-                )}
+              <div 
+                key={res.id} 
+                onClick={() => handleCardClick(res)}
+                style={{ 
+                  border: '1px solid #e5e7eb', 
+                  padding: '1.25rem', 
+                  borderRadius: '8px', 
+                  opacity: opacityVal,
+                  background: 'white',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  transition: 'transform 0.1s, box-shadow 0.1s'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'; }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#111827' }}>{res.resources?.name || 'Recurso'}</h3>
+                  <span className={`status-badge ${!isActive ? 'status-full' : (isPast ? 'status-partial' : 'status-available')}`} style={{ fontSize: '10px' }}>
+                    {statusLabel}
+                  </span>
+                </div>
+                
+                <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '12px' }}>
+                  Creada el {creationDate}
+                </div>
+
+                <div style={{ fontSize: '0.9rem', color: '#374151', marginBottom: '4px', textTransform: 'capitalize' }}>
+                  <strong>Día:</strong> {formattedResDate}
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#374151', marginBottom: '8px' }}>
+                  <strong>Periodos:</strong> {res.period_start} {res.period_start !== res.period_end ? `al ${res.period_end}` : ''}
+                </div>
+                
+                <div style={{ fontSize: '0.9rem', color: '#4b5563', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {res.notes}
+                </div>
               </div>
             )
           })}
         </div>
+      )}
+
+      {isDetailsModalOpen && selectedReservation && (
+        <ReservationDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          reservation={selectedReservation}
+          onReportIncident={handleReportIncident}
+          onSuccess={fetchReservations}
+        />
+      )}
+
+      {isIncidentModalOpen && selectedReservation && (
+        <IncidentModal
+          isOpen={isIncidentModalOpen}
+          onClose={() => setIsIncidentModalOpen(false)}
+          reservation={selectedReservation}
+          incident={selectedIncident}
+          onSuccess={fetchReservations}
+        />
       )}
     </section>
   )
