@@ -4,12 +4,10 @@ import { isSameDay, startOfDay } from '../../lib/date';
 
 export function BasicCalendarView({ resources, reservations, weekDays, onCellClick }) {
   
-  // Helper to format date header
   const formatDateHeader = (date) => {
     return new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).format(date);
   };
 
-  // Helper to get reservations for a specific resource and day
   const getReservationsForCell = (resourceId, dayDate) => {
     return reservations.filter(res => 
       res.resource_id === resourceId && 
@@ -47,7 +45,6 @@ export function BasicCalendarView({ resources, reservations, weekDays, onCellCli
                 const dayReservations = getReservationsForCell(resource.id, day);
                 const statusClass = getResourceColorStatus(resource, dayReservations);
                 
-                // Calculate exactly which periods are occupied to show specific text if needed
                 let occupiedPeriods = new Set();
                 dayReservations.forEach(res => {
                   if (res.period_start && res.period_end) {
@@ -58,7 +55,6 @@ export function BasicCalendarView({ resources, reservations, weekDays, onCellCli
                 const occupiedArray = Array.from(occupiedPeriods).sort((a,b)=>a-b);
                 let cellText = getStatusText(statusClass, occupiedArray.length);
                 
-                // If partial, maybe be more specific "Ocupada en 1, 3 y 6" as user requested
                 if (statusClass === 'status-partial' && occupiedArray.length > 0) {
                    cellText = `Ocupada en ${occupiedArray.join(', ')}`;
                 }

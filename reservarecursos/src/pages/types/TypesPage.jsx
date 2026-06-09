@@ -28,7 +28,6 @@ export function TypesPage() {
   const handleCreate = async () => {
     if (!newName.trim()) return;
     try {
-      // Omit description if it's not strictly required in your use case or add it if you want
       await typesService.createType({ name: newName });
       setNewName('');
       fetchTypes();

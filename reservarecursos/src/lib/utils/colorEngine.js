@@ -1,14 +1,11 @@
 export function getResourceColorStatus(resource, reservationsForDay = []) {
-  // Purple: Maintenance
   if (resource.status === 'maintenance') {
-    return 'status-maintenance'; // CSS class name mapping
+    return 'status-maintenance';
   }
 
-  // Calculate occupied periods
   let occupiedPeriods = new Set();
   
   reservationsForDay.forEach(res => {
-    // res.period_start and res.period_end are inclusive
     const start = res.period_start;
     const end = res.period_end;
     
@@ -21,17 +18,14 @@ export function getResourceColorStatus(resource, reservationsForDay = []) {
 
   const count = occupiedPeriods.size;
 
-  // Green: 0 periods occupied
   if (count === 0) {
     return 'status-available';
   }
 
-  // Red: All 7 periods occupied
   if (count === 7) {
     return 'status-full';
   }
 
-  // Orange: Partially occupied (1-6 periods)
   return 'status-partial';
 }
 

@@ -10,14 +10,12 @@ export function AppShell() {
   const navigate = useNavigate()
   const [openProfile, setOpenProfile] = useState(false)
   
-  // Profile editing state
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [editName, setEditName] = useState('')
   const [editDepartmentId, setEditDepartmentId] = useState('')
   const [departments, setDepartments] = useState([])
   const [loadingProfile, setLoadingProfile] = useState(false)
 
-  // Fetch departments when profile opens
   useEffect(() => {
     if (openProfile && departments.length === 0) {
       departmentsService.getDepartments().then(setDepartments).catch(console.error)

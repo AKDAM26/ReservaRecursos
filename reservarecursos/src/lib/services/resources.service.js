@@ -2,7 +2,6 @@ import { supabase } from '../supabaseClient';
 
 export const resourcesService = {
   async getResources(filters = {}) {
-    // we can do a join to get the type name if needed, but for now select *
     let query = supabase.from('resources').select(`
       *,
       resource_types (

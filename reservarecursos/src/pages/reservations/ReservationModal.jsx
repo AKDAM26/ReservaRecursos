@@ -33,18 +33,18 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
   const initIsoDow = initDow === 0 ? 6 : initDow - 1;
   const [daysOfWeek, setDaysOfWeek] = useState(initIsoDow <= 4 ? [initIsoDow] : [0]);
   
-  // Single mode period
+
   const [periodStart, setPeriodStart] = useState(initialPeriod || 1);
   const [periodEnd, setPeriodEnd] = useState(initialPeriod || 1);
   
-  // Recurring mode periods (per day)
+
   const [recurringPeriods, setRecurringPeriods] = useState({});
 
   const [notes, setNotes] = useState('');
   const [errorObj, setErrorObj] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Existing reservations for the single date to block periods
+
   const [existingReservations, setExistingReservations] = useState([]);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
     return () => { active = false; };
   }, [resourceId]);
 
-  // Fetch reservations for the selected date(s) and resource
+
   useEffect(() => {
     let active = true;
     if (resourceId && date) {
@@ -83,7 +83,7 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
           } else if (!isRecurring) {
             filters.reservation_date = date;
           } else {
-            return; // Wait for endDate if recurring
+            return;
           }
 
           const res = await reservationsService.getReservations(filters);
@@ -97,7 +97,7 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
     return () => { active = false; };
   }, [resourceId, date, endDate, isRecurring]);
 
-  // Determine occupied periods for the single reservation dropdowns
+
   const occupiedPeriods = useMemo(() => {
     const occupied = new Set();
     if (!isRecurring) {
@@ -110,16 +110,16 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
     return occupied;
   }, [existingReservations, isRecurring]);
 
-  // Determine occupied periods for recurring dropdowns (per day of week)
+
   const occupiedRecurringPeriods = useMemo(() => {
     const occupiedPerDay = { 0: new Set(), 1: new Set(), 2: new Set(), 3: new Set(), 4: new Set() };
     if (isRecurring) {
       existingReservations.forEach(res => {
         const resDate = new Date(res.reservation_date);
         const day = resDate.getUTCDay();
-        const isoDow = day === 0 ? 6 : day - 1; // 0=Lunes, 1=Martes...
+        const isoDow = day === 0 ? 6 : day - 1;
         
-        if (isoDow <= 4) { // Only Mon-Fri
+        if (isoDow <= 4) {
           for (let i = res.period_start; i <= res.period_end; i++) {
             occupiedPerDay[isoDow].add(i);
           }
@@ -155,7 +155,7 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
     }));
   };
 
-  // Initialize recurring periods if a new day is selected
+
   useEffect(() => {
     setRecurringPeriods(prev => {
       const updated = { ...prev };
@@ -181,7 +181,7 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
         if (parseLocal(date) > parseLocal(endDate)) throw new Error('La fecha de fin no puede ser anterior a la de inicio.');
         if (daysOfWeek.length === 0) throw new Error('Debes seleccionar al menos un día de la semana.');
         
-        // Validate each day's periods
+
         for (const day of daysOfWeek) {
           const p = recurringPeriods[day];
           if (p.start > p.end) {
@@ -189,7 +189,7 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
           }
         }
 
-        // Send parallel RPC requests for each selected day
+
         const promises = daysOfWeek.map(day => {
           const p = recurringPeriods[day];
           return reservationsService.createRecurringReservations({
@@ -197,7 +197,7 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
             created_by: user.id,
             start_date: date,
             end_date: endDate,
-            days_of_week: [day], // Only this day
+            days_of_week: [day],
             period_start: parseInt(p.start),
             period_end: parseInt(p.end),
             notes
@@ -207,13 +207,13 @@ export function ReservationModal({ onClose, onSuccess, initialResourceId = '', i
         await Promise.all(promises);
 
       } else {
-        // Single reservation
+
         const localDate = parseLocal(date);
         if (localDate < parseLocal(todayStr)) throw new Error('No puedes crear reservas en fechas pasadas.');
         if (localDate.getDay() === 0 || localDate.getDay() === 6) throw new Error('No se pueden realizar reservas en fines de semana.');
         if (periodStart > periodEnd) throw new Error('El periodo de inicio no puede ser mayor al periodo de fin.');
         
-        // Final sanity check before submission
+
         for (let i = periodStart; i <= periodEnd; i++) {
           if (occupiedPeriods.has(i)) throw new Error('Uno o más periodos seleccionados ya están ocupados.');
         }

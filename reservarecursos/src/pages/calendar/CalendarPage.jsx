@@ -17,12 +17,11 @@ export function CalendarPage() {
   const { user } = useAuth();
   const today = useMemo(() => startOfDay(new Date()), []);
   const [cursorMonth, setCursorMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selectedDay, setSelectedDay] = useState(today); // For Detailed View
+  const [selectedDay, setSelectedDay] = useState(today);
   const [cursorWeek, setCursorWeek] = useState(() => {
-    // Determine the Monday of the current week
     const current = new Date(today);
     const day = current.getDay();
-    const diff = current.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    const diff = current.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(current.setDate(diff));
   });
 
@@ -36,7 +35,7 @@ export function CalendarPage() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Modals state
+
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
@@ -44,10 +43,9 @@ export function CalendarPage() {
   const [selectedCellData, setSelectedCellData] = useState({ resourceId: '', date: '', period: null });
   const [selectedReservation, setSelectedReservation] = useState(null);
 
-  // Week days calculation for Basic View
   const weekDays = useMemo(() => {
     const days = [];
-    for (let i = 0; i < 5; i++) { // Monday to Friday
+    for (let i = 0; i < 5; i++) {
       const d = new Date(cursorWeek);
       d.setDate(cursorWeek.getDate() + i);
       days.push(d);
@@ -55,7 +53,7 @@ export function CalendarPage() {
     return days;
   }, [cursorWeek]);
 
-  // Load Resource Types and Resources initially
+
   useEffect(() => {
     const fetchBaseData = async () => {
       try {
@@ -72,18 +70,18 @@ export function CalendarPage() {
     fetchBaseData();
   }, []);
 
-  // Fetch Reservations based on View Mode
+
   const fetchReservations = useCallback(async () => {
     setLoading(true);
     try {
       let startDateStr, endDateStr;
       
       if (viewMode === 'detailed') {
-        // Fetch only for selectedDay using local timezone to avoid shifts
+
         startDateStr = isoDate(selectedDay);
         endDateStr = startDateStr;
       } else {
-        // Fetch for the week (Monday to Friday)
+
         startDateStr = isoDate(weekDays[0]);
         endDateStr = isoDate(weekDays[4]);
       }
@@ -105,13 +103,13 @@ export function CalendarPage() {
     fetchReservations();
   }, [fetchReservations]);
 
-  // Filter resources based on selected type
+
   const filteredResources = useMemo(() => {
     if (selectedResourceType === 'all') return resources;
     return resources.filter(r => r.type_id === selectedResourceType);
   }, [resources, selectedResourceType]);
 
-  // Handlers for Week Navigation
+
   const handlePrevWeek = () => {
     const prev = new Date(cursorWeek);
     prev.setDate(prev.getDate() - 7);
@@ -171,7 +169,6 @@ export function CalendarPage() {
 
       <div className={`calendarLayout ${viewMode === 'basic' ? 'layout-basic' : 'layout-detailed'}`}>
         
-        {/* HYBRID DESIGN: Only show Month Picker in Detailed View */}
         {viewMode === 'detailed' && (
           <section className="calendarBox calendarBox-modern">
             <div className="calendarBox__head">
@@ -201,7 +198,7 @@ export function CalendarPage() {
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                 const classes = ['calendarDay'];
                 if (!inMonth) classes.push('is-out');
-                if (isWeekend) classes.push('is-disabled'); // Optional styling for CSS if needed
+                if (isWeekend) classes.push('is-disabled');
                 if (isSameDay(date, today)) classes.push('is-today');
                 if (isSameDay(date, selectedDay)) classes.push('is-active');
                 

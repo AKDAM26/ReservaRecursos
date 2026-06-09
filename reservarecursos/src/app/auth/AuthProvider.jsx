@@ -63,7 +63,6 @@ export function AuthProvider({ children }) {
         })
         if (error) throw error
         
-        // Fix "Double Login": Esperar a tener el profile en Context antes de navegar.
         if (data?.session?.user) {
           await fetchProfile(data.session.user.id)
         }
@@ -72,8 +71,6 @@ export function AuthProvider({ children }) {
         if (!email || !password) throw new Error('Completa email y contraseña.')
         if (password.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.')
         
-        // Supabase maneja la validación de dominio @educa.madrid.org en el trigger
-        // pero incluimos un check sencillo en el FE para feedback más rápido
         const normalized = email.trim().toLowerCase()
         const domainOk = normalized.endsWith('@educa.madrid.org')
         if (!domainOk) throw new Error('Solo se permite correo @educa.madrid.org.')
@@ -90,7 +87,6 @@ export function AuthProvider({ children }) {
         })
         if (error) throw error
         
-        // Fix "Double Login" equivalente durante el registro automático de Supabase
         if (data?.session?.user) {
           await fetchProfile(data.session.user.id)
         }

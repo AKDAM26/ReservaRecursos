@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import './Modal.css';
 
 export function Modal({ isOpen, onClose, title, children }) {
-  // Prevent scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';

@@ -68,7 +68,6 @@ export function HomePage() {
             <div key={res.id} className="resourceCard">
               <div className="resourceCard__top">
                 <div className="resourceCard__icon">
-                  {/* Just a placeholder icon */}
                   <span style={{ fontSize: '18px' }}>📦</span>
                 </div>
                 <span className="pill">{res.resource_types?.name || 'Recurso'}</span>
@@ -93,7 +92,6 @@ export function HomePage() {
           onClose={() => setBookingResource(null)}
           onSuccess={() => {
             setBookingResource(null);
-            // We could redirect to /mis-reservas or calendar, or just let them be.
             alert('¡Reserva creada con éxito!');
           }}
         />

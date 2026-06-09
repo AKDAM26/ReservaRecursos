@@ -37,9 +37,8 @@ export function monthLabel(d, locale = 'es-ES') {
   )
 }
 
-// Semana empieza en lunes (España): 0=lunes...6=domingo
 export function weekdayIndexMondayFirst(d) {
-  const js = d.getDay() // 0=domingo..6=sábado
+  const js = d.getDay()
   return (js + 6) % 7
 }
 

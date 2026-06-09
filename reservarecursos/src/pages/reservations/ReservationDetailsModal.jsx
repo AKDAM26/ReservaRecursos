@@ -16,7 +16,7 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
   const [incident, setIncident] = useState(null);
   const [loadingIncident, setLoadingIncident] = useState(true);
 
-  // Edit form state
+
   const [resources, setResources] = useState([]);
   const [editData, setEditData] = useState(null);
   const [existingReservations, setExistingReservations] = useState([]);
@@ -27,7 +27,7 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
     if (!reservation) return;
     let active = true;
     
-    // Check for incident
+
     const fetchIncident = async () => {
       try {
         const data = await incidentsService.getIncidentByReservation(reservation.id);
@@ -43,14 +43,14 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
     return () => { active = false; };
   }, [reservation]);
 
-  // Load resources if editing
+
   useEffect(() => {
     if (isEditing && resources.length === 0) {
       resourcesService.getResources({ status: 'available' }).then(setResources);
     }
   }, [isEditing, resources.length]);
 
-  // Load existing reservations for the selected date/resource to block periods
+
   useEffect(() => {
     if (isEditing && editData?.resource_id && editData?.date) {
       reservationsService.getReservations({
@@ -74,7 +74,7 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
   const isFuture = resDate > today;
   const isCancelled = reservation.status === 'cancelled';
   
-  // Incident logic: max 48h after the reservation
+
   const maxIncidentDate = new Date(resDate);
   maxIncidentDate.setDate(resDate.getDate() + 2);
   const canReportIncident = !isFuture && today <= maxIncidentDate && !isCancelled;
@@ -100,7 +100,7 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
     if (!confirm(msg)) return;
     try {
       if (isRecurring) {
-        // Cancel all recurring reservations with the same recurrence_id
+
         await reservationsService.cancelRecurring(reservation.recurrence_id, user.id);
       } else {
         await reservationsService.cancelReservation(reservation.id, user.id);
@@ -120,7 +120,7 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
       return setErrorObj('El periodo de inicio no puede ser mayor al de fin.');
     }
 
-    // Validation: Check for overlaps excluding self
+
     const occupied = new Set();
     existingReservations.forEach(r => {
       if (r.id !== reservation.id) {
@@ -237,7 +237,7 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
   }).format(parseLocal(reservation.reservation_date));
 
-  // incident text
+
   let incidentStatusText = '';
   if (incident) {
     if (incident.status === 'pending') incidentStatusText = 'Pendiente';
@@ -281,7 +281,6 @@ export function ReservationDetailsModal({ isOpen, onClose, reservation, onReport
             </div>
           </div>
 
-          {/* Incident section */}
           {!loadingIncident && (
             <div className="detail-item" style={{ marginTop: '10px' }}>
               <span className="detail-label">Estado de Incidencias</span>

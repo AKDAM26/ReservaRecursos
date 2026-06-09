@@ -35,7 +35,7 @@ export function IncidentsDashboard() {
   }, []);
 
   const handleStatusChange = async (e, id, newStatus) => {
-    e.stopPropagation(); // prevent row click
+    e.stopPropagation();
     try {
       const updates = { status: newStatus };
       if (newStatus === 'resolved') {
@@ -188,8 +188,8 @@ export function IncidentsDashboard() {
           isOpen={isDetailsModalOpen}
           onClose={() => setIsDetailsModalOpen(false)}
           reservation={selectedReservation}
-          onReportIncident={() => {}} // admin doesn't report from here
-          onSuccess={fetchIncidents} // fetch incidents again in case status changed
+          onReportIncident={() => {}}
+          onSuccess={fetchIncidents}
         />
       )}
 

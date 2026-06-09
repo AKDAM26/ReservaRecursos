@@ -3,7 +3,6 @@ import React from 'react';
 export function DetailedCalendarView({ resources, reservations, currentUserId, onCellClick, onReservationClick }) {
   const periods = [1, 2, 3, 4, 5, 6, 7];
 
-  // Helper to find reservation for a specific resource and period
   const getReservationForPeriod = (resourceId, periodNumber) => {
     return reservations.find(res => 
       res.resource_id === resourceId &&
@@ -48,7 +47,7 @@ export function DetailedCalendarView({ resources, reservations, currentUserId, o
                   statusClass = 'status-maintenance';
                   cellText = 'En mantenimiento';
                 } else if (reservation) {
-                  statusClass = 'status-full'; // Red for occupied single period
+                  statusClass = 'status-full';
                   const isOwn = reservation.created_by === currentUserId;
                   const teacherName = isOwn ? 'Tu reserva' : (reservation.profiles?.display_name || 'Sin nombre registrado');
                   cellText = teacherName;
