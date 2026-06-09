@@ -59,3 +59,20 @@ target/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# --- Professional Clean-Up: Prompts, AI Tools & Documentation ---
+# Exclude AI-generated workspace metadata & temporary files
+.cursor/
+.cursorrules
+.agents/
+.gemini/
+.antigravity/
+task.md
+implementation_plan.md
+walkthrough.md
+SCRIPT.txt
+Ajustes_App_Web.pdf
+
+# --- FCT Documentation & Local Drafts ---
+Documentacion_FCT.md
+/logo.png
