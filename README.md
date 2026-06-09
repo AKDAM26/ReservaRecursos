@@ -1,21 +1,10 @@
 # ReservaAula - Sistema de Gestión de Reservas e Incidencias
 
-Una aplicación web interactiva y modular diseñada para centralizar y optimizar la reserva de espacios físicos (aulas, laboratorios) y recursos materiales (carritos de portátiles, proyectores) en centros educativos, garantizando una planificación libre de solapamientos.
+Una aplicación web interactiva y modular diseñada para centralizar y optimizar la reserva de recursos (aulas, laboratorios, carritos de portátiles, etc.) en el centro educativo IES ALfredo Kraus.
 
 ---
 
-## 🚀 Características Principales
-
-*   **Autenticación Institucional Segura**: Acceso restringido exclusivamente a miembros del centro educativo a través de la validación obligatoria del dominio `@educa.madrid.org` durante el registro.
-*   **Gestión Basada en Periodos Lectivos**: Las reservas se realizan en bloques de periodos escolares (del 1º al 7º período), eliminando la complejidad de los horarios libres y adaptándose al ritmo escolar real.
-*   **Control de Conflictos Transaccional**: Restricciones de exclusión (`GIST` con rangos de enteros) aplicadas directamente en la base de datos PostgreSQL. Esto impide físicamente que dos profesores reserven el mismo recurso en la misma fecha y periodo.
-*   **Reservas Recurrentes Eficientes (RPC)**: Creación masiva de reservas periódicas (ej. todos los lunes y miércoles de un mes) mediante un procedimiento almacenado transaccional en el servidor.
-*   **Seguridad y Privacidad Estricta (RLS)**: Las políticas de *Row Level Security* de Supabase garantizan que los profesores solo puedan visualizar, editar o cancelar sus propios registros de reserva e incidencias, mientras que los administradores poseen privilegios globales.
-*   **Módulo de Incidencias**: Flujo integrado que permite a los docentes reportar averías o problemas detectados en un recurso desde el detalle de su reserva, notificando de inmediato al equipo administrativo.
-
----
-
-## 🛠️ Stack Tecnológico
+##  Stack Tecnológico
 
 ### Frontend
 *   **React 19** & **Vite**: Renderizado ágil de componentes y entorno de desarrollo ultra veloz.
@@ -28,7 +17,7 @@ Una aplicación web interactiva y modular diseñada para centralizar y optimizar
 
 ---
 
-## 📐 Arquitectura del Sistema
+##  Arquitectura del Sistema
 
 ```mermaid
 graph TD
@@ -52,7 +41,7 @@ graph TD
 
 ---
 
-## 📋 Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```text
 ├── reservarecursos/
@@ -71,7 +60,7 @@ graph TD
 
 ---
 
-## 🔧 Instalación y Configuración Local
+##  Instalación y Configuración Local
 
 ### 1. Clonar el repositorio y acceder al proyecto:
 ```bash
