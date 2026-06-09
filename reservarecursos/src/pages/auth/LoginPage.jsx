@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../app/auth/useAuth.js'
+import logo from '../../assets/logo.png'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -28,7 +29,9 @@ export function LoginPage() {
   return (
     <div className="authScreen">
       <header className="site__topbar">
-        <div className="topbar__brand">ReservaAula</div>
+        <div className="topbar__brand">
+          <img src={logo} alt="ReservaAula" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+        </div>
         <div className="authScreen__actions">
           <Link className="btn btn--ghost" to="/login">
             Iniciar Sesión
@@ -41,7 +44,9 @@ export function LoginPage() {
 
       <main className="authScreen__main">
         <form className="authCard" onSubmit={onSubmit}>
-          <div className="authCard__icon">↪</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <img src={logo} alt="Logo" style={{ height: '64px', width: 'auto', objectFit: 'contain' }} />
+          </div>
           <h1>Bienvenido de nuevo</h1>
           <p>Accede con tu Nombre para gestionar reservas</p>
 

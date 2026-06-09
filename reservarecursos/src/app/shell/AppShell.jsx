@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
 import { departmentsService } from '../../lib/services/departments.service'
 import { profilesService } from '../../lib/services/profiles.service'
+import logo from '../../assets/logo.png'
 
 export function AppShell() {
   const { user, logout, refreshProfile } = useAuth()
@@ -57,14 +58,16 @@ export function AppShell() {
     { to: '/app/mis-reservas', label: 'Mis Reservas', roles: ['teacher', 'admin'] },
     { to: '/app/recursos', label: 'Recursos', roles: ['admin'] },
     { to: '/app/tipos', label: 'Tipos', roles: ['admin'] },
-    { to: '/app/incidencias', label: 'Incidencias', roles: ['admin'] },
+    { to: '/app/incidencias', label: 'Incidencias', roles: ['teacher', 'admin'] },
   ]
   const visible = items.filter((item) => item.roles.includes(user?.role ?? 'teacher'))
 
   return (
     <div className="site">
       <header className="site__topbar">
-        <div className="topbar__brand">ReservaAula</div>
+        <div className="topbar__brand">
+          <img src={logo} alt="ReservaAula" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+        </div>
 
         <nav className="topbar__nav">
           {visible.map((item) => (

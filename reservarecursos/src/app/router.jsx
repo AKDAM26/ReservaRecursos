@@ -55,7 +55,7 @@ export const router = createBrowserRouter([
       {
         path: 'incidencias',
         element: (
-          <RequireRole allow={['admin']}>
+          <RequireRole allow={['admin', 'teacher']}>
             <IncidentsDashboard />
           </RequireRole>
         ),

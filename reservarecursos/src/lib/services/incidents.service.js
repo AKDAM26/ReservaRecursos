@@ -43,5 +43,15 @@ export const incidentsService = {
       
     if (error) throw error;
     return data;
+  },
+
+  async deleteIncident(id) {
+    const { data, error } = await supabase
+      .from('incidents')
+      .delete()
+      .eq('id', id);
+      
+    if (error) throw error;
+    return data;
   }
 };
